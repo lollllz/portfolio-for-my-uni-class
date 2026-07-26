@@ -3,10 +3,26 @@ import { useSite } from "../store/SiteContext";
 import { defaultContent } from "../content/defaultContent";
 import { Text, Area, Num, Color, Check, Select } from "./fields";
 import ListEditor from "./ListEditor";
+import { publishContent, testAccess, detectRepo } from "./publish";
 
 const PASS_KEY = "portfolio.pass.v1";
 const DEFAULT_PASS = "kamiladminkerja2026";
 const getPass = () => { try { return localStorage.getItem(PASS_KEY) || DEFAULT_PASS; } catch { return DEFAULT_PASS; } };
+
+// GitHub publish settings live in the owner's browser only.
+const GH = {
+  get: () => {
+    const d = detectRepo();
+    const ls = (k, f) => { try { return localStorage.getItem(k) ?? f; } catch { return f; } };
+    return {
+      owner: ls("portfolio.gh.owner", d.owner),
+      repo: ls("portfolio.gh.repo", d.repo),
+      branch: ls("portfolio.gh.branch", "main"),
+      token: ls("portfolio.gh.token", ""),
+    };
+  },
+  set: (k, v) => { try { localStorage.setItem("portfolio.gh." + k, v); } catch {} },
+};
 
 const TABS = [
   ["site", "bx-globe", "Site"],
@@ -19,6 +35,7 @@ const TABS = [
   ["contact", "bx-envelope", "Contact"],
   ["footer", "bx-copyright", "Footer"],
   ["theme", "bx-palette", "Theme"],
+  ["publish", "bx-cloud-upload", "Publish"],
   ["advanced", "bx-code-block", "Advanced"],
 ];
 
@@ -40,7 +57,27 @@ export default function AdminApp() {
     t[keys[keys.length - 1]] = value;
     save(next);
   };
-  const ping = (msg) => { setFlash(msg); setTimeout(() => setFlash(""), 2200); };
+  const ping = (msg) => { setFlash(msg); setTimeout(() => setFlash(""), 4000); };
+  const [publishing, setPublishing] = useState(false);
+
+  const doPublish = async () => {
+    const cfg = GH.get();
+    if (!cfg.owner || !cfg.repo || !cfg.token) {
+      setTab("publish");
+      ping("Set up publishing first (owner, repo, token).");
+      return;
+    }
+    setPublishing(true);
+    ping("Publishing to GitHub…");
+    try {
+      await publishContent({ ...cfg, content: c });
+      ping("Published ✓ — your live site updates in ~1 minute.");
+    } catch (e) {
+      ping("Publish failed: " + e.message);
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   if (!authed) return <Gate onOk={() => { sessionStorage.setItem("portfolio.authed", "1"); setAuthed(true); }} />;
 
@@ -67,6 +104,9 @@ export default function AdminApp() {
             ))}
           </nav>
           <div className="space-y-2 border-t border-slate-800 p-3">
+            <button onClick={doPublish} disabled={publishing} className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-2.5 text-sm font-semibold text-black disabled:opacity-60">
+              <i className="bx bx-cloud-upload text-lg" /> {publishing ? "Publishing…" : "Publish live"}
+            </button>
             <a href="#/" className="block rounded-lg border border-slate-700 py-2 text-center text-sm hover:bg-slate-800">↗ View site</a>
             <button onClick={() => { sessionStorage.removeItem("portfolio.authed"); setAuthed(false); }} className="w-full rounded-lg border border-slate-700 py-2 text-sm hover:bg-slate-800">Log out</button>
           </div>
@@ -298,12 +338,76 @@ function Panel({ tab, c, set, save, reset, ping }) {
         <p className="text-xs text-slate-500">Note: the globe re-reads the accent color on page reload.</p>
       </>);
 
+    case "publish":
+      return <Publish c={c} ping={ping} />;
+
     case "advanced":
       return <Advanced c={c} save={save} reset={reset} ping={ping} />;
 
     default:
       return null;
   }
+}
+
+function Publish({ c, ping }) {
+  const [cfg, setCfg] = useState(() => GH.get());
+  const [busy, setBusy] = useState(false);
+  const upd = (k, v) => { GH.set(k, v); setCfg((s) => ({ ...s, [k]: v })); };
+
+  const test = async () => {
+    setBusy(true);
+    try {
+      const ok = await testAccess(cfg);
+      ping(ok ? "Connected ✓ — token can access the repo." : "Could not access the repo — check owner/repo/token.");
+    } finally { setBusy(false); }
+  };
+  const publishNow = async () => {
+    setBusy(true);
+    ping("Publishing to GitHub…");
+    try {
+      await publishContent({ ...cfg, content: c });
+      ping("Published ✓ — your live site updates in ~1 minute.");
+    } catch (e) {
+      ping("Publish failed: " + e.message);
+    } finally { setBusy(false); }
+  };
+
+  const ready = cfg.owner && cfg.repo && cfg.token;
+
+  return (<><H title="Publish" desc="Push your edits live to the whole world — commits content.json to your GitHub repo and auto-deploys." />
+
+    <div className="mb-5 rounded-xl border border-slate-700 bg-slate-900 p-4">
+      <div className="grid grid-cols-2 gap-4">
+        <Text label="GitHub owner" value={cfg.owner} onChange={(v) => upd("owner", v)} placeholder="lollllz" />
+        <Text label="Repository" value={cfg.repo} onChange={(v) => upd("repo", v)} placeholder="portfolio-for-my-uni-class" />
+      </div>
+      <Text label="Branch" value={cfg.branch} onChange={(v) => upd("branch", v)} />
+      <div className="mb-1">
+        <label className="mb-1.5 block text-xs font-semibold text-slate-300">GitHub token</label>
+        <input type="password" value={cfg.token} onChange={(e) => upd("token", e.target.value)} placeholder="github_pat_… or ghp_…"
+          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-accent" autoComplete="off" />
+      </div>
+      <p className="text-xs text-slate-500">Stored only in this browser. Use a <b>fine-grained</b> token limited to this one repo with <b>Contents: Read and write</b>.</p>
+    </div>
+
+    <div className="mb-5 flex flex-wrap gap-3">
+      <button onClick={publishNow} disabled={!ready || busy} className="rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-black disabled:opacity-50">
+        <i className="bx bx-cloud-upload" /> {busy ? "Working…" : "Publish now"}
+      </button>
+      <button onClick={test} disabled={!ready || busy} className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm hover:bg-slate-800 disabled:opacity-50">Test connection</button>
+    </div>
+
+    <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-sm text-slate-300">
+      <p className="mb-2 font-semibold text-slate-200">How to get a token (1 min)</p>
+      <ol className="list-decimal space-y-1 pl-5 text-slate-400">
+        <li>Open <a className="text-accent underline" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">github.com → fine-grained tokens</a>.</li>
+        <li>Repository access → <b>Only select repositories</b> → pick <code>{cfg.repo || "your repo"}</code>.</li>
+        <li>Permissions → <b>Contents</b> → <b>Read and write</b>.</li>
+        <li>Generate, copy the token, paste it above, then hit <b>Publish now</b>.</li>
+      </ol>
+      <p className="mt-3 text-xs text-slate-500">Security: anyone with this token can edit this repo. It lives only in your browser's localStorage — don't use the admin on a shared computer, and delete the token on GitHub if it leaks.</p>
+    </div>
+  </>);
 }
 
 function Advanced({ c, save, reset, ping }) {
