@@ -1,13 +1,13 @@
 {
   "settings": {
-    "brandName": "Your",
-    "brandAccent": "Name",
+    "brandName": "Ahmad",
+    "brandAccent": "Kamil",
     "theme": {
       "bg": "#080808",
       "bg2": "#101010",
       "text": "#ffffff",
-      "accent": "#ea580c",
-      "accent2": "#f59e0b",
+      "accent": "#b51a00",
+      "accent2": "#0433ff",
       "fontDisplay": "Poppins",
       "fontBody": "Poppins"
     },
@@ -43,15 +43,15 @@
   "hero": {
     "enabled": true,
     "greeting": "Hello, It's Me",
-    "name": "Your Name",
+    "name": "AHMAD KAMIL",
     "intro": "And I'm a",
     "roles": [
       "Web Developer",
       "UI Designer",
       "Freelancer"
     ],
-    "bio": "A short, punchy introduction about yourself. Tell visitors who you are and what you build. Every word here is editable from the admin panel.",
-    "photo": "",
+    "bio": "Hello Im Ahmad Kamil Aizat an aspiring freelancer and entrepreneur with skills in full stack website development using html , react and vice",
+    "photo": "https://i.postimg.cc/mDMwrL9C/IMG-0458.jpg",
     "ctaLabel": "Hire Me",
     "ctaHref": "#contact",
     "secondaryLabel": "Download CV",
@@ -79,21 +79,21 @@
     "enabled": true,
     "heading": "About",
     "headingAccent": "Me",
-    "photo": "",
-    "title": "Frontend Developer!",
-    "subtitle": "Your role / tagline",
-    "body": "Replace this with a longer story about your background, your skills, and what you love building.\n\nUse blank lines to separate paragraphs. Everything here is editable from the admin panel.",
+    "photo": "https://i.postimg.cc/kXjxq6ZV/IMG-0066.jpg",
+    "title": "Full Stack Developer!",
+    "subtitle": "Freelance / tagline",
+    "body": "Hello Im Ahmad Kamil Aizat an aspiring freelancer and entrepreneur with skills in full stack website development using html , react and vice",
     "stats": [
       {
         "value": "3+",
         "label": "Years Experience"
       },
       {
-        "value": "40+",
+        "value": "7+",
         "label": "Projects Done"
       },
       {
-        "value": "20+",
+        "value": "8+",
         "label": "Happy Clients"
       }
     ],
