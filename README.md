@@ -1,4 +1,4 @@
-# Portfolio Website (Vite + React)
+# Kamil Portfolio Website (Vite + React)
 
 A modern, animated personal portfolio with a **built-in WordPress-style admin panel** —
 edit every section, recolor the theme, and reorder content without touching code.
@@ -16,10 +16,6 @@ npm install
 npm run dev      # http://localhost:5178
 ```
 
-## Editing content
-1. Open the site and go to **`/#/admin`** (or click the small gear, bottom-left).
-2. Password: **`kamiladminkerja2026`** (change it under **Advanced → Change admin password**).
-3. Edit anything — changes save to this browser (localStorage) instantly.
 
 ## Publishing on GitHub Pages
 Browser edits are local to your machine. To publish your content to visitors:
